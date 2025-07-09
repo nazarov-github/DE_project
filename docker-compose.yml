@@ -57,7 +57,7 @@ services:
       - ./plugins:/opt/airflow/plugins
     ports:
       - "8080:8080"
-    command: webserver
+    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow webserver"
     networks:
       - airflow_net
 
@@ -73,7 +73,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: scheduler
+    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow scheduler"
     networks:
       - airflow_net
 
@@ -89,7 +89,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: triggerer
+    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow triggerer"
     networks:
       - airflow_net
      
@@ -106,7 +106,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: ["db", "init"]
+    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow db init"
     networks:
       - airflow_net 
       
@@ -118,8 +118,7 @@ services:
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
-    command: ["users", "create", "--username", "admin", "--password", "admin", "--firstname", "Admin", "--lastname", "User", "--role", "Admin", 
-    	     "--email", "admin@example.com"]
+    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com"
     networks:
       - airflow_net
 

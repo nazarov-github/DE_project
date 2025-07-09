@@ -7,7 +7,10 @@
 ### Требования
 - Python 3.8+
 - Установленные зависимости: `pip install -r requirements.txt`
-- Запущенные сервисы Kafka и Zookeeper (из docker-compose.yml)
+- Запущенные сервисы Kafka, Zookeeper и MinIO (из docker-compose.yml)
+- Дополнительные зависимости:
+  - minio (для работы с S3-совместимым хранилищем)
+  - boto3 (для работы с AWS S3)
 
 ### Установка
 ```bash
@@ -53,7 +56,13 @@ python scripts/kafka_producer.py
 ### Запуск
 1. Запустите сервисы:
 ```bash
-docker-compose up -d
+docker-compose up -d --build
+```
+
+2. Инициализируйте MinIO:
+```bash
+docker-compose exec minio mc alias set local http://minio:9000 minioadmin minioadmin
+docker-compose exec minio mc mb local/data-lake
 ```
 
 2. Создайте таблицу в ClickHouse:
@@ -90,5 +99,30 @@ docker-compose exec kafka kafka-console-consumer --topic sensor_metrics --from-b
 1. Остановите streaming приложение (Ctrl+C)
 2. Остановите сервисы:
 ```bash
-docker-compose down
+docker-compose down -v
 ```
+
+## Устранение проблем
+
+### Проблемы с Airflow
+**Симптомы**: Ошибки подключения к базе данных или веб-интерфейсу
+
+**Решение**:
+1. Проверить состояние контейнеров:
+```bash
+docker-compose ps
+```
+
+2. Пересоздать контейнеры:
+```bash
+docker-compose down -v && docker-compose up -d
+```
+
+3. Проверить логи:
+```bash
+docker-compose logs -f airflow-webserver
+```
+
+**Профилактика**:
+- Убедитесь, что порты 8080 и 5432 свободны
+- Проверьте настройки подключения к базе данных в docker-compose.yml

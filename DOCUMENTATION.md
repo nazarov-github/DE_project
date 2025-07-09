@@ -139,3 +139,70 @@ docker-compose logs -f spark
 ## Мониторинг
 - Kafka: `http://localhost:9000`
 - ClickHouse: `http://localhost:8123`
+- MinIO: `http://localhost:9001` (логин: minioadmin, пароль: minioadmin)
+
+## Интеграция с MinIO
+
+### Настройка клиента MinIO
+```python
+from minio import Minio
+
+client = Minio(
+    "minio:9000",
+    access_key="minioadmin",
+    secret_key="minioadmin",
+    secure=False
+)
+```
+
+### Примеры использования boto3 и S3Hook
+1. Загрузка файла в MinIO:
+```python
+import boto3
+
+s3 = boto3.client(
+    's3',
+    endpoint_url='http://minio:9000',
+    aws_access_key_id='minioadmin',
+    aws_secret_access_key='minioadmin'
+)
+
+s3.upload_file('local_file.txt', 'data-lake', 'remote_file.txt')
+```
+
+2. Чтение файла из MinIO:
+```python
+response = s3.get_object(Bucket='data-lake', Key='remote_file.txt')
+data = response['Body'].read()
+```
+
+3. Загрузка строки данных через S3Hook:
+```python
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+
+hook = S3Hook(aws_conn_id="s3_conn")
+hook.load_string(
+    string_data=data,
+    key="weather/weather_data.json",
+    bucket_name="weather",
+    replace=True
+)
+```
+
+## Конфигурация volumes
+
+В docker-compose.yml добавлены следующие volumes:
+```yaml
+volumes:
+  minio_data:
+    driver: local
+  airflow_db:
+    driver: local
+  airflow_logs:
+    driver: local
+```
+
+Назначение:
+- `minio_data`: Хранилище для MinIO
+- `airflow_db`: Данные PostgreSQL для Airflow
+- `airflow_logs`: Логи Airflow
