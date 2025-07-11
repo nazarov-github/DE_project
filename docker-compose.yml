@@ -5,6 +5,11 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - postgres_airflow_data:/var/lib/postgresql/data
     ports:
@@ -42,7 +47,10 @@ services:
     image: apache/airflow:2.9.0
     restart: always
     depends_on:
-      - postgres-airflow
+      postgres-airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
@@ -57,14 +65,17 @@ services:
       - ./plugins:/opt/airflow/plugins
     ports:
       - "8080:8080"
-    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow webserver"
+    command: bash -c "airflow webserver"
     networks:
       - airflow_net
 
   airflow-scheduler:
     image: apache/airflow:2.9.0
     depends_on:
-      - postgres-airflow
+      postgres-airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
@@ -73,14 +84,17 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow scheduler"
+    command: bash -c "airflow scheduler"
     networks:
       - airflow_net
 
   airflow-triggerer:
     image: apache/airflow:2.9.0
     depends_on:
-      - postgres-airflow
+      postgres-airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
@@ -89,7 +103,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow triggerer"
+    command: bash -c "airflow triggerer"
     networks:
       - airflow_net
      
@@ -97,7 +111,8 @@ services:
     image: apache/airflow:2.9.0
     container_name: airflow-init
     depends_on:
-      - postgres-airflow
+      postgres-airflow:
+        condition: service_healthy
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
@@ -106,7 +121,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow db init"
+    command: bash -c "airflow db init"
     networks:
       - airflow_net 
       
@@ -118,13 +133,18 @@ services:
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
-    command: bash -c "pip install minio==7.1.0 boto3==1.28.57 && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com"
+    command: bash -c "airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com"
     networks:
       - airflow_net
 
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
@@ -202,7 +222,7 @@ services:
     volumes:
        - ./config/jupyter_notebook_config.py:/home/jovyan/.jupyter/jupyter_notebook_config.py
        - ./notebooks:/home/jovyan/notebooks
-       - .spark/jars:/home/jovyan/jars
+       - ./spark/jars:/home/jovyan/jars
     networks:
       - airflow_net
 
@@ -214,8 +234,12 @@ services:
     ports:
       - "4040:4040"
       - "8890:8888"
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=app_user
+      - MINIO_SECRET_KEY=secure_password123
     volumes:
-      - .spark/jars:/home/jovyan/jars
+      - ./spark/jars:/home/jovyan/jars
       - ./scripts:/home/jovyan/scripts
     networks:
       - airflow_net
@@ -266,6 +290,38 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+    networks:
+      - airflow_net
+
+  airflow-worker:
+    image: apache/airflow:2.9.0
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres-airflow:5432/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    command: bash -c "airflow celery worker"
+    networks:
+      - airflow_net
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - airflow_net
 
