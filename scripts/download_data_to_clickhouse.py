@@ -32,7 +32,7 @@ def create_spark_session():
         jar_files = [
             f"{jars_dir}/hadoop-aws-3.3.1.jar",
             f"{jars_dir}/aws-java-sdk-bundle-1.11.901.jar",
-            f"{jars_dir}/clickhouse-jdbc-0.3.2.jar"
+            f"{jars_dir}/clickhouse-jdbc-0.4.6-all.jar"
         ]
         for jar in jar_files:
             if not os.path.exists(jar):
@@ -80,20 +80,21 @@ def download_data_to_clickhouse():
     ])
     try:
         raw_df = spark.read.json(path, schema=schema, multiLine=True)
-        logging.info(f"DataFrame {raw_df} успешно создан")
+        logging.info("✔ DataFrame успешно загружен. Печатаю схему и первые строки:")
+        raw_df.printSchema()
+        raw_df.show(truncate=False)
     except Exception as e:
         logging.error(f"DataFrame не создан по причине {e}")
         raise
     
     flat_df = raw_df.select(
-        "latitude", "longitude", "timezone",
-        F.col("current_weather_units.time").alias("format_time"),
-        F.col("current_weather.time").alias("time"),
-        F.col("current_weather.temperature").alias("temperature"),
-        F.col("current_weather.windspeed").alias("windspeed")
-        
+        F.col("latitude"),
+        F.col("longitude"),
+        F.col("timezone")
     )
-    flat_df.show()
+
+    flat_df.show(truncate=False)
+    flat_df.printSchema()
 
     logging.info("Начинаю процесс записи в Clickhouse")
     try:
@@ -102,7 +103,7 @@ def download_data_to_clickhouse():
             .option("url", Variable.get("CLICKHOUSE_URL")) \
             .option("user", Variable.get("CLICKHOUSE_USER")) \
             .option("password", Variable.get("CLICKHOUSE_PASSWORD")) \
-            .option("driver", "ru.yandex.clickhouse.ClickHouseDriver") \
+            .option("driver", "com.clickhouse.jdbc.ClickHouseDriver") \
             .option("dbtable", "default.weather") \
             .mode("append") \
             .save()

@@ -34,12 +34,6 @@ with DAG (
         dag=dag
     )
 
-    spark_task = PythonOperator(
-        task_id="spark_session",
-        python_callable=create_spark_session,
-       dag=dag
-    )
-
     download_to_clickhouse = PythonOperator(
         task_id="download_to_click",
         python_callable=download_data_to_clickhouse,
@@ -47,4 +41,4 @@ with DAG (
     )
 
 
-wait_for_update_data >> spark_task >> download_to_clickhouse
+wait_for_update_data >> download_to_clickhouse

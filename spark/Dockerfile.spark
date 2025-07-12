@@ -26,6 +26,3 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Возвращаемся к обычному пользователю jovyan
 USER jovyan
-
-
-
