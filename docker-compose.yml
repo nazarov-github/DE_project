@@ -139,8 +139,8 @@ services:
       - airflow_net
 
   minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    image: bitnami/minio:2024.7.26
+    command: minio server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -250,6 +250,46 @@ services:
     networks:
       - airflow_net
 
+  postgres-nessie:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: nessie
+      POSTGRES_PASSWORD: nessie
+      POSTGRES_DB: nessie
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nessie -d nessie"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_nessie_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - airflow_net
+
+  nessie-server:
+    image: ghcr.io/projectnessie/nessie:0.104.10
+    depends_on:
+      postgres-nessie:
+        condition: service_healthy
+    environment:
+      NESSIE_VERSION_STORE_TYPE: JDBC
+      NESSIE_VERSION_STORE_PERSIST_JDBC_DATASOURCE: postgresql
+      QUARKUS_DATASOURCE_POSTGRESQL_JDBC_URL: jdbc:postgresql://postgres-nessie:5432/nessie
+      QUARKUS_DATASOURCE_POSTGRESQL_USERNAME: nessie
+      QUARKUS_DATASOURCE_POSTGRESQL_PASSWORD: nessie
+      QUARKUS_HTTP_PORT: 19120
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:19120/api/v2/config >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "19120:19120"
+    networks:
+      - airflow_net
+
 
 networks:
   airflow_net:
@@ -257,9 +297,8 @@ networks:
 volumes:
   postgres_airflow_data:
   postgres_app_data:
-  postgres_superset_data:
   clickhouse_data:
   minio_data:
-  superset_home:
   notebooks:
+  postgres_nessie_data:
 
