@@ -1,0 +1,24 @@
+data_lord_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: postgres-app
+      user: appuser
+      pass: apppassword
+      port: 5432
+      dbname: appdb
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      retries: 1
+    clickhouse:
+      type: clickhouse
+      host: clickhouse
+      port: 8123
+      user: admin
+      password: clickhouse
+      database: default
+      schema: default
+      threads: 1

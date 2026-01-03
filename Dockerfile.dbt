@@ -1,0 +1,15 @@
+FROM ghcr.io/dbt-labs/dbt-postgres:1.7.0
+
+# Создаем рабочую директорию для dbt проекта
+WORKDIR /usr/app/dbt
+
+# Копируем dbt проект (будет смонтирован через volume)
+# Для инициализации копируем базовые файлы
+COPY ./dbt /usr/app/dbt
+
+# Устанавливаем переменные окружения
+ENV DBT_PROFILES_DIR=/usr/app/dbt
+
+# Переопределяем ENTRYPOINT, чтобы можно было запускать другие команды
+ENTRYPOINT []
+CMD ["tail", "-f", "/dev/null"]

@@ -290,6 +290,21 @@ services:
     networks:
       - airflow_net
 
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    image: my-dbt:custom
+    depends_on:
+      postgres-app:
+        condition: service_started
+    volumes:
+      - ./dbt:/usr/app/dbt
+    environment:
+      DBT_PROFILES_DIR: /usr/app/dbt
+    networks:
+      - airflow_net
+
 
 networks:
   airflow_net:
