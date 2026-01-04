@@ -8,3 +8,6 @@ keys
 
 
 .env
+
+/dbt/profiles.yml
+

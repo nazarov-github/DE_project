@@ -1,0 +1,183 @@
+version: 2
+
+sources:
+  - name: raw
+    database: appdb
+    schema: public
+    description: Сырые операционные данные
+    
+    tables: 
+      - name: categories
+        description: Категории
+        columns: 
+          - name: category_id
+            description: ID категории
+          - name: category_name
+            description: Наименование категории
+          - name: parent_category
+            description: Родительская категории
+          - name: created_at
+            description: Дата создания записи
+          
+
+      - name: customers
+        description: Клиенты
+        columns: 
+          - name: customer_id
+            description: ID клиента
+          - name: email
+            description: Электронная почта
+          - name: first_name
+            description: Имя клиента
+          - name: last_name
+            description: Фамилия клиента
+          - name: phone
+            description: Телефон клиента
+          - name: date_of_birth
+            description: Дата рождения клиента
+          - name: gender
+            description: Пол
+          - name: country
+            description: Страна
+          - name: city
+            description: Город
+          - name: postal_code
+            description: Индекс
+          - name: address
+            description: Адрес
+          - name: registration_date
+            description: Дата регистрации
+          - name: last_login
+            description: Логин
+          - name: is_active
+            description: Признак актуальности
+          - name: customer_segment
+            description: Сегмент
+          - name: marketing_consent
+            description: Согласие        
+
+      - name: inventory_logs
+        description: Таблица логов инвентаря
+        columns: 
+          - name: log_id
+            description: ID лога
+          - name: product_id
+            description: ID продукта
+          - name: movement_type
+            description: Тип движения
+          - name: quantity_change
+            description: Изменение количества
+          - name: reason
+            description: Причина
+          - name: timestamp
+            description: Время
+          - name: reference_id
+            description: ID ссылки
+          - name: notes
+            description: Запись
+          
+          
+      - name: order_items
+        description: Товары в заказах
+        columns: 
+          - name: order_item_id
+            description: ID товара в заказе
+          - name: order_id
+            description: ID заказа
+          - name: product_id 
+            description: ID продукта
+          - name: quantity
+            description: Количество
+          - name: unit_price
+            description: Цена за единицу
+          - name: line_total
+            description: Итого
+          - name: discount_amount
+            description: Общая скидка
+
+
+      - name: orders
+        description: Заказы
+        columns: 
+          - name: order_id
+            description: ID заказа
+          - name: customer_id 
+            description: ID клиента
+          - name: order_date
+            description: Дата заказа
+          - name: status
+            description: Статус 
+          - name: payment_method
+            description: Метод оплаты
+          - name: shipping_address
+            description: Адрес отправления
+          - name: billing_address 
+            description: Адрес платежа
+          - name: discount_amount 
+            description: Сумма скидки
+          - name: tax_amount 
+            description: Сумма налога
+          - name: shipping_cost 
+            description: Стоимость доставки
+          - name: total_amount 
+            description: Общая сумма
+          - name: currency 
+            description: Валюта
+          - name: created_at 
+            description: Дата создания записи
+          - name: updated_at
+            description: Дата обновления записи 
+          - name: subtotal
+            description: Промежуточный итог
+
+
+      - name: pproducts
+        description: Продукты
+        columns: 
+          - name: product_id
+            description: ID продукта
+          - name: product_name 
+            description: Наименование продукта
+          - name: category_id
+            description: ID категории
+          - name: brand
+            description: Бренд
+          - name: price
+            description: Цена
+          - name: cost
+            description: Затраты
+          - name: stock_quantity
+            description: Количество на складе
+          - name: weight_kg 
+            description: Масса в килограммах
+          - name: dimensions 
+            description: Размер
+          - name: description 
+            description: Описание
+          - name: is_active 
+            description: Признак актуальности
+          - name: created_at 
+            description: Дата создания
+
+
+      - name: reviews
+        description: Отзывы о продуктах
+        columns: 
+          - name: review_id
+            description: ID продукта
+          - name: customer_id 
+            description: Наименование продукта
+          - name: product_id
+            description: ID категории
+          - name: rating
+            description: Рейтинг
+          - name: title
+            description: Наименование
+          - name: comment 
+            description: Комментарий 
+          - name: is_verified_purchase
+            description: Признак верификации
+          - name: helpful_votes
+            description: Полезные голоса
+          - name: created_at 
+            description: Дата создания записи
