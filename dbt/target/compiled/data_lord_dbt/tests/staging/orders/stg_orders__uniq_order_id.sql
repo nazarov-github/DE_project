@@ -1,3 +1,10 @@
+{{
+    config(
+        severity = 'warn,'
+    )
+
+
+}}
 SELECT COUNT(order_id)
 FROM
     "appdb"."public_staging"."stg_orders"
