@@ -3,7 +3,6 @@
         severity = 'warn,'
     )
 
-
 }}
 SELECT COUNT(order_id)
 FROM
