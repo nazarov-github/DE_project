@@ -1,4 +1,10 @@
-
+{{
+    config(
+        materialized='incremental',
+        schema='staging',
+        incremental_strategy='append'  
+    )
+}}
 
 select customer_id,
        email,
@@ -16,4 +22,8 @@ select customer_id,
        is_active,
        customer_segment,
        marketing_consent
-from "appdb"."public"."customers"
+from {{ source("raw", "customers")}}
+{% if is_incremental() %}
+WHERE customer_id > (SELECT MAX(customer_id) FROM {{ this }})
+{% endif %}
+

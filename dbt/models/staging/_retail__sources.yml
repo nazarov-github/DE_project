@@ -27,6 +27,20 @@ sources:
             period: day
           filter: current_timestamp::date - created_at::date < 3
         loaded_at_field: created_at::timestamp
+
+      - name: categories_merge
+        description: Table for tests
+        columns: 
+          - name: category_id
+            description: ID категории
+          - name: category_name
+            description: Наименование категории
+          - name: parent_category
+            description: Родительская категории
+          - name: created_at
+            description: Дата создания записи
+          - name: updated_at
+            description: Date for update 
           
 
       - name: customers
